@@ -11,6 +11,12 @@ const Home = () => {
     if (isLoggedIn) {
       ws.current = new WebSocket("ws://localhost:8080");
 
+      ws.current.onopen = () => {
+        ws.current.send(
+          JSON.stringify({ type: "userJoined", username: currentUser })
+        );
+      };
+
       ws.current.onmessage = (event) => {
         const newMessages = JSON.parse(event.data);
         setMessages((prevMessages) => [...prevMessages, ...newMessages]);
@@ -28,6 +34,7 @@ const Home = () => {
     const message = {
       sender: currentUser,
       text: newMessage,
+      type: "message",
       image: `https://picsum.photos/seed/${Math.random()}/50`,
     };
 
@@ -42,19 +49,19 @@ const Home = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen">
       {!isLoggedIn ? (
         <div className="flex flex-col mx-auto h-full container w-[80%] items-center justify-center">
-          <h1 className="text-3xl font-bold mb-6 text-gray-800">Login</h1>
+          <h1 className="text-2xl mb-4">Login</h1>
           <input
             type="text"
-            className="p-3 w-full max-w-md border border-gray-300 rounded-lg mb-6 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="p-2 border border-gray-300 rounded mb-4"
             placeholder="Enter your username"
             value={currentUser}
             onChange={(e) => setCurrentUser(e.target.value)}
           />
           <button
-            className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-all transform hover:scale-105"
+            className="bg-blue-500 text-white px-4 py-2 rounded"
             onClick={handleLogin}
           >
             Login
@@ -62,10 +69,10 @@ const Home = () => {
         </div>
       ) : (
         <>
-          <header className="bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white shadow-md">
-            <h1 className="text-2xl font-semibold text-center">Web Chat App</h1>
+          <header className="bg-gray-800 p-4 text-white">
+            <h1 className="text-xl">Web Chat App</h1>
           </header>
-          <main className="flex-grow p-6 overflow-auto bg-gray-200 w-full md:w-[80%] lg:w-[60%] items-center justify-center mx-auto">
+          <main className="flex-grow p-4 overflow-auto w-full md:w-[80%] lg:w-[60%] mx-auto">
             <div className="space-y-4">
               {messages.map((message, index) => (
                 <div
@@ -74,44 +81,53 @@ const Home = () => {
                     message.sender === currentUser ? "justify-end" : ""
                   }`}
                 >
-                  {message.sender !== currentUser && (
-                    <img
-                      src={message.image}
-                      alt="avatar"
-                      className="w-10 h-10 rounded-full shadow-lg"
-                    />
-                  )}
-                  <div
-                    className={`relative max-w-[70%] p-4 rounded-xl shadow-md transition-transform transform hover:scale-105 ${
-                      message.sender === currentUser
-                        ? "bg-blue-500 text-white self-end"
-                        : "bg-white text-gray-800"
-                    }`}
-                  >
-                    <div className="font-bold">{message.sender}</div>
-                    <div>{message.text}</div>
-                    <div
-                      className={`absolute bottom-0 ${
-                        message.sender === currentUser
-                          ? "right-0 transform translate-x-full"
-                          : "left-0 transform -translate-x-full"
-                      }`}
-                    >
+                  {message.type === "message" && (
+                    <>
+                      {message.sender !== currentUser && (
+                        <img
+                          src={message.image}
+                          alt="avatar"
+                          className="w-10 h-10 rounded-full"
+                        />
+                      )}
                       <div
-                        className={`w-0 h-0 border-t-8 border-t-transparent ${
+                        className={`relative p-4 rounded-lg ${
                           message.sender === currentUser
-                            ? "border-l-8 border-l-blue-500"
-                            : "border-r-8 border-r-white"
-                        } border-b-8 border-b-transparent`}
-                      ></div>
+                            ? "bg-blue-500 text-white self-end"
+                            : "bg-gray-200 text-black"
+                        }`}
+                      >
+                        <div className="font-bold">{message.sender}</div>
+                        <div>{message.text}</div>
+                        <div
+                          className={`absolute bottom-0 ${
+                            message.sender === currentUser
+                              ? "right-0 transform translate-x-full"
+                              : "left-0 transform -translate-x-full"
+                          }`}
+                        >
+                          <div
+                            className={`w-0 h-0 border-t-8 border-t-transparent ${
+                              message.sender === currentUser
+                                ? "border-l-8 border-l-blue-500"
+                                : "border-r-8 border-r-gray-200"
+                            } border-b-8 border-b-transparent`}
+                          ></div>
+                        </div>
+                      </div>
+                      {message.sender === currentUser && (
+                        <img
+                          src={message.image}
+                          alt="avatar"
+                          className="w-10 h-10 rounded-full"
+                        />
+                      )}
+                    </>
+                  )}
+                  {message.type === "notification" && (
+                    <div className="text-center w-full text-gray-500">
+                      {message.text}
                     </div>
-                  </div>
-                  {message.sender === currentUser && (
-                    <img
-                      src={message.image}
-                      alt="avatar"
-                      className="w-10 h-10 rounded-full shadow-lg"
-                    />
                   )}
                 </div>
               ))}

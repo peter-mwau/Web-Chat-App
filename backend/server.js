@@ -1,17 +1,3 @@
-// const io = require('socket.io')(3000, {
-//     cors: {
-//         origin: '*',
-//     },
-// });
-
-// io.on('connection', (socket) => {
-//     console.log('a user connected');
-//     socket.on('message', (message) => {
-//         io.emit('message', message);
-//     });
-// });
-
-
 const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ port: 8080 });
@@ -24,14 +10,31 @@ wss.on('connection', (ws) => {
 
     ws.on('message', (message) => {
         const parsedMessage = JSON.parse(message);
-        messages.push(parsedMessage);
 
-        // Broadcast the new message to all clients
-        wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify([parsedMessage]));
-            }
-        });
+        if (parsedMessage.type === 'userJoined') {
+            const joinMessage = {
+                sender: 'System',
+                text: `${parsedMessage.username} has joined the chat`,
+                type: 'notification',
+            };
+            messages.push(joinMessage);
+
+            // Broadcast the join message to all clients
+            wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify([joinMessage]));
+                }
+            });
+        } else {
+            messages.push(parsedMessage);
+
+            // Broadcast the new message to all clients
+            wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify([parsedMessage]));
+                }
+            });
+        }
     });
 });
 
