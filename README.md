@@ -73,11 +73,11 @@ npm install
 npm run dev
 ```
 
-- The frontend server will start on http://localhost:3000.
+- The frontend server will start on http://localhost:5173.
 
 ## Usage
 
-- Open your browser and navigate to http://localhost:3000.
+- Open your browser and navigate to http://localhost:5173.
 - Enter a username to log in.
 - Start chatting in real-time!
 
