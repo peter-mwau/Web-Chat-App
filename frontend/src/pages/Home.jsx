@@ -5,6 +5,7 @@ const Home = () => {
   const [newMessage, setNewMessage] = useState("");
   const [currentUser, setCurrentUser] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
   const ws = useRef(null);
 
   useEffect(() => {
@@ -36,16 +37,40 @@ const Home = () => {
       text: newMessage,
       type: "message",
       image: `https://picsum.photos/seed/${Math.random()}/50`,
+      replyTo: replyTo ? replyTo.id : null,
     };
 
     ws.current.send(JSON.stringify(message));
     setNewMessage("");
+    setReplyTo(null);
   };
 
   const handleLogin = () => {
     if (currentUser.trim() !== "") {
       setIsLoggedIn(true);
     }
+  };
+
+  const handleLogout = () => {
+    if (ws.current) {
+      ws.current.send(
+        JSON.stringify({ type: "userLeft", username: currentUser })
+      );
+      ws.current.send(
+        JSON.stringify({
+          type: "notification",
+          text: `${currentUser} has left the chat.`,
+        })
+      );
+      ws.current.close();
+    }
+    setIsLoggedIn(false);
+    setCurrentUser("");
+    setMessages([]);
+  };
+
+  const handleReply = (message) => {
+    setReplyTo(message);
   };
 
   return (
@@ -69,8 +94,14 @@ const Home = () => {
         </div>
       ) : (
         <>
-          <header className="bg-gray-800 p-4 text-white">
+          <header className="bg-gray-800 p-4 text-white flex justify-between items-center">
             <h1 className="text-xl">Web Chat App</h1>
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded"
+              onClick={handleLogout}
+            >
+              Leave Chat
+            </button>
           </header>
           <main className="flex-grow p-4 overflow-auto w-full md:w-[80%] lg:w-[60%] mx-auto">
             <div className="space-y-4">
@@ -98,6 +129,15 @@ const Home = () => {
                         }`}
                       >
                         <div className="font-bold">{message.sender}</div>
+                        {message.replyTo && (
+                          <div className="text-sm text-gray-500 border-l-2 border-gray-300 pl-2 mb-2">
+                            Replying to:{" "}
+                            {
+                              messages.find((m) => m.id === message.replyTo)
+                                ?.text
+                            }
+                          </div>
+                        )}
                         <div>{message.text}</div>
                         <div
                           className={`absolute bottom-0 ${
@@ -122,6 +162,9 @@ const Home = () => {
                           className="w-10 h-10 rounded-full"
                         />
                       )}
+                      <button onClick={() => handleReply(message)}>
+                        Reply
+                      </button>
                     </>
                   )}
                   {message.type === "notification" && (
@@ -149,6 +192,17 @@ const Home = () => {
                 Send
               </button>
             </div>
+            {replyTo && (
+              <div className="text-sm text-gray-500 mt-2">
+                Replying to: {replyTo.text}
+                <button
+                  className="ml-2 text-red-500"
+                  onClick={() => setReplyTo(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </footer>
         </>
       )}
